@@ -6,13 +6,14 @@ import csv
 import io
 import urllib.request
 import git
-
 from token import tokens
+
+# тестовый бот - test, основной бот - main
 token = tokens['main']
 bot = telebot.TeleBot(token)
+
 admin_id = 641336894
 fortochka = 'Форточка 🕺'
-
 
 def getSubject(day, para, group):
     # адрес таблицы (без листа)
