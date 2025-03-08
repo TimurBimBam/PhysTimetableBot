@@ -1,8 +1,3 @@
-# основной бот
-# 8140012821:AAEOGoAZnZVk0pv7tv2j_OPo_ash2Q4kdbM
-# тестовый бот
-# 7155761835:AAGQrlBJL25xWVB0BuwxeKD5yDR58KJTrlo
-
 from urllib.error import URLError
 import telebot
 from telebot import types
@@ -12,7 +7,9 @@ import io
 import urllib.request
 import git
 
-bot = telebot.TeleBot('8140012821:AAEOGoAZnZVk0pv7tv2j_OPo_ash2Q4kdbM')
+from token import tokens
+token = tokens['main']
+bot = telebot.TeleBot(token)
 admin_id = 641336894
 fortochka = 'Форточка 🕺'
 
