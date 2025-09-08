@@ -6,10 +6,10 @@ import csv
 import io
 import urllib.request
 import git
-from token import tokens
+
 
 # тестовый бот - test, основной бот - main
-token = tokens['main']
+token = '8186343979:AAFMghLrH2fQcyj-ic_GtZX0vNk9m7lDQ_o'
 bot = telebot.TeleBot(token)
 
 admin_id = 641336894
@@ -17,7 +17,7 @@ fortochka = 'Форточка 🕺'
 
 def getSubject(day, para, group):
     # адрес таблицы (без листа)
-    url = 'https://docs.google.com/spreadsheets/d/1lmSfZIINVP3gnuDD1KppiGMlrJYpwLi0znT3Oh_Y9IQ/export?format=csv'
+    url = 'https://docs.google.com/spreadsheets/d/1mzweiyFR-_rer_T812R74phF-BqbH-ygkdhNRsNtTCU/export?format=csv'
     # добавление к адресу номер листа
     if git.gitstr != '':
         url += git.gitstr
@@ -29,6 +29,7 @@ def getSubject(day, para, group):
         reader = csv.reader(f)
         for row in reader:
             rows.append(row)
+            #print(row)
 
     # Возвращаемые значения
     subject_type = ''
@@ -38,6 +39,7 @@ def getSubject(day, para, group):
 
     input_day_key = 0  # Позиция нужного дня в таблице
     input_para_key = 0  # Позиция нужной пары в таблице
+    founded_type = False  # есть ли в названии тип предмета
 
     # Для сравнения дня недели из таблицы с требуемым
     wday = {"ПОНЕДЕЛЬНИК": 0, "ВТОРНИК": 1, "СРЕДА": 2, "ЧЕТВЕРГ": 3, "ПЯТНИЦА": 4, "СУББОТА": 5}
@@ -47,6 +49,9 @@ def getSubject(day, para, group):
         if rows[i][0] in wday and wday[rows[i][0]] == day:
             input_day_key = i
 
+
+
+
     # Поиск позиции нужной пары в таблице, начиная с позиции нужного дня
     for i in range(input_day_key, len(rows)):
         buffer = rows[i][2]
@@ -55,11 +60,12 @@ def getSubject(day, para, group):
             if buffer[0] == str(para):
                 input_para_key = i
                 break
+    print("BUF: ", buffer)
 
     is_cell_empty = False  # пустая ли клетка предмета
     groups = {3: 7, 4: 9}  # номер группы: номер столбца, относящегося к этой группе
     par_times = {1: '8:15 - 9:50', 2: '10:00 - 11:35', 3: '11:45 - 13:20', 4: '14:00 - 15:35',
-                 5: '15:45 - 17:20'}  # номер пары: время
+                 5: '15:45 - 17:20', 6: '17:30 - 19:05', 7: '19:25 - 21:00'}  # номер пары: время
 
     group_ind = groups[group]  # получаем столбец нужной группы
     subject = rows[input_para_key][group_ind]  # клетка нужной пары
@@ -67,8 +73,9 @@ def getSubject(day, para, group):
     # проверка на форточку или объединенную пару
     if subject == '':
         is_cell_empty = True
-        subject3 = rows[input_para_key][groups[3]]
-        if subject3 == '':
+        subjectOtherGroup = rows[input_para_key][groups[3]]
+        print("!!!!: ", subjectOtherGroup)
+        if subjectOtherGroup == '':
             subjectPI = rows[input_para_key][3]
             buffer = subjectPI.split('\n')
             subjectPI = buffer[0]
@@ -78,9 +85,12 @@ def getSubject(day, para, group):
             else:
                 return {'name': fortochka, 'type': '-', 'room': '-', 'teacher': '-', 'time': par_times[para]}
         else:
-            subject = subject3
+            subject_type = 'ЛК'
+            founded_type = True
+            subject = subjectOtherGroup
 
     # разделение на предмет и преподавателя
+    #print(subject)
     buffer_list = subject.split('\n')  # Список из названия предмета и преподавателя
     buffer = buffer_list[0]  # Название предмета
     teacher = buffer_list[1]  # Преподаватель
@@ -89,7 +99,7 @@ def getSubject(day, para, group):
     if buffer[-1:] == ' ':
         buffer = buffer[:-1]
 
-    founded_type = False  # есть ли в названии тип предмета
+
     # ищем тип предмета
     for i in range(len(buffer) - 1):
         if buffer[i] + buffer[i + 1] == "ЛК":
@@ -104,10 +114,13 @@ def getSubject(day, para, group):
 
     # если нет типа, определяем как спецкурс
     if not founded_type:
-        subject_type = 'спецкурс\n'
+        subject_type = 'какая-то пара\n'
         subject_name = buffer
     # если пустая клетка и не лекция, то это форточка
+    print('subject_type: ', subject_type)
     if is_cell_empty and subject_type != 'ЛК':
+        print("ФОРТОЧКА СРАБОТАЛА ТУТЬ")
+
         return {'name': fortochka, 'type': '-', 'room': '-', 'teacher': '-', 'time': par_times[para]}
 
     if subject_type != 'ЛК':
@@ -196,15 +209,16 @@ def func(message):
     if today_number == 6:
         bot.send_message(message.chat.id, text="ВОСКРЕСЕНЬЕ, ЧИЛЛЬ!")
     else:
-        amount_pars = 5
-        if today_number == 0 or amount_pars == 5:
-            amount_pars = 4
+        amount_pars = 6
+        # if today_number == 0 or amount_pars == 5:
+        #     amount_pars = 4
         bot.send_message(message.chat.id,
                          text="Вот твоё расписание на " + weekdays[today_number] + "!" + "\n(Номер группы: " + str(
                              set_group) + ")", parse_mode='HTML')
         output_message = []
         for i in range(amount_pars + 1):
             i_subject = getSubject(today_number, i + 1, set_group)
+            print(i_subject)
             name = i_subject['name']
             stype = ''
             teacher = ''

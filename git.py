@@ -1,1 +1,1 @@
-gitstr = '&gid=2082348139'
+gitstr = ''
