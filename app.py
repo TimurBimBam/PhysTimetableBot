@@ -74,7 +74,7 @@ def getSubject(day, para, group):
     if subject == '':
         is_cell_empty = True
         subjectOtherGroup = rows[input_para_key][groups[3]]
-        print("!!!!: ", subjectOtherGroup)
+        #print("!!!!: ", subjectOtherGroup)
         if subjectOtherGroup == '':
             subjectPI = rows[input_para_key][3]
             buffer = subjectPI.split('\n')
